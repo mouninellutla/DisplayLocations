@@ -1,0 +1,17 @@
+// Class to fetch the Location records from Salesforce
+global class DisplayLocationController {
+    //public list<Location__c> locList {get; set;}
+    
+    public  DisplayLocationController(){
+        
+            }
+ // Remote action method for VF/javascript to consume the locations
+    @remoteAction
+    global static List<Location__c> fetchLocations(Integer rowLimit){ 
+        List<Location__c> results = [SELECT Coordinates__Latitude__s,Coordinates__Longitude__s 
+                                      FROM Location__c Limit :rowLimit];
+        return results;
+    }
+
+    
+}

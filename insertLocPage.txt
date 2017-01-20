@@ -1,0 +1,14 @@
+<!-- This page is used to insert locations -->
+<apex:page controller="LocationInsertClass">
+    <apex:pageMessages />
+    
+    <apex:form >
+        <br/><br/>
+        Enter number of records to Insert:
+        <br/>
+        <apex:inputText value="{!recordCount}"/>
+        <br/><br/>
+        <apex:commandButton value="Insert Locations" action="{!insertLocationRecords}"/>
+        <br/>
+    </apex:form>
+</apex:page>

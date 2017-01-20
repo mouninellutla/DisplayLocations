@@ -1,0 +1,113 @@
+<!-- This page is used to display the locations on map -->
+<apex:page controller="DisplayLocationController" sidebar="false">
+    <apex:includeScript value="https://maps.googleapis.com/maps/api/js?sensor=false&libraries=geometry,places&ext=.js"/>
+    
+    <script type="text/javascript">
+    var bounds = new google.maps.LatLngBounds();
+    var blueFlagCounter =0, greenFlagCounter=0 , redFlagCounter =0, yellowFlagCounter =0, flagCount=5000;
+    window.onload = function () {
+        loadLocations(flagCount);
+    }
+    function loadLocations(flagCount) {
+        // Reset the flag Counters:
+        blueFlagCounter =0, greenFlagCounter=0 , redFlagCounter =0, yellowFlagCounter =0;
+        
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.DisplayLocationController.fetchLocations}', 
+            flagCount,
+            function(result, event){
+                if (event.status) {
+                    //console.log('Result from SF: ' + result);
+                    loadMap(result);
+                    
+                    // Update the flag counters:
+                    document.getElementById('blueFlagCounter').innerHTML = blueFlagCounter;
+                    document.getElementById('greenFlagCounter').innerHTML = greenFlagCounter;
+                    document.getElementById('redFlagCounter').innerHTML = redFlagCounter;
+                    document.getElementById('yellowFlagCounter').innerHTML = yellowFlagCounter;
+                } else if (event.type === 'exception') {
+                    alert('Exception: '+event.message + '<br/>\n<pre>' + event.where );
+                } else {
+                    alert('Error: '+event.message);
+                }
+            },
+            {escape: true}
+        );
+    }
+    function loadMap(markers) {
+        var mapOptions = { zoom: 10,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        var map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+        
+        //Create and open InfoWindow.
+        var infoWindow = new google.maps.InfoWindow();
+        //var myLatlng;
+        var marker;
+        for (var i = 0; i < markers.length; i++) {
+            var lat=markers[i].Coordinates__Latitude__s ,lng =markers[i].Coordinates__Longitude__s;
+            var myLatlng = new google.maps.LatLng(lat,lng);
+            
+            //Display markers on the map using the following as a color guide:
+            //  Greater than 40° Latitude and less than -100° Longitude: Green
+            //  Greater than 40° Latitude and greater than -100° Longitude: Blue
+            //  Less than 40° Latitude and less than -100° Longitude: Black
+            //  Less than 40° Latitude and greater than -100° Longitude: Red
+            var markerFlag = (lat > 40 ? (lng > -100 ? 'blue' : 'green') : (lng>-100 ? 'red':'yellow') );
+            
+            //There should be a counter on the page that displays how many of each color marker is rendered
+            if(markerFlag == 'blue') blueFlagCounter++;
+            if(markerFlag == 'red') redFlagCounter++;
+            if(markerFlag == 'green') greenFlagCounter++;
+            if(markerFlag == 'yellow') yellowFlagCounter++;
+            
+            marker = new google.maps.Marker({
+                icon: 'https://maps.google.com/mapfiles/ms/icons/'+markerFlag+'.png',
+                position: myLatlng,
+                map: map,
+                title: 'Marker',
+                //animation: google.maps.Animation.DROP  // To remove if slow
+            });
+            bounds.extend(marker.getPosition());
+            map.fitBounds(bounds);
+            
+            //Attach click event to the marker.
+            (function (marker,lat,lng) {
+                google.maps.event.addListener(marker, "click", function (e) {
+                    //Wrap the content inside an HTML DIV in order to set height and width of InfoWindow.
+                    infoWindow.setContent("<div style = 'width:200px;min-height:40px'> Coordinates:<br/><b>Lat:</b> " + lat +"<br/><b>Lng:</b> "+lng+ "</div>");
+                    infoWindow.open(map, marker);
+                });
+            })(marker,lat,lng);
+            
+        }
+    }
+    </script>
+    <table style="width:100%;font-weight:bold;text-align:center;">
+        <tr>
+            <th style="color:green;text-align:center;background-color:#CCCCCC;">Green Flag count</th>
+            <th style="color:blue;text-align:center;background-color:#CCCCCC;">Blue Flag count</th>
+            <th style="color:red;text-align:center;background-color:#CCCCCC;">Red Flag count</th>
+            <th style="color:yellow;text-align:center;background-color:#CCCCCC;">Yellow Flag count</th>
+        </tr>
+        <tr>
+            <td>
+                <span id="greenFlagCounter">0</span>
+            </td>
+            <td>
+                <span id="blueFlagCounter">0</span>
+            </td>
+            <td>
+                <span id="redFlagCounter">0</span>
+            </td>
+            <td>
+                <span id="yellowFlagCounter">0</span>
+            </td>
+        </tr>
+    </table>
+    <br/>
+    <div id="map_canvas" style="width:100%; height:450px; border: 2px solid #3872ac;"></div>
+    <br/><br/>
+    Change Number of Flags (1-5000): 
+    <input type="text" value="5000" onchange="if(this.value!= 'undefined' && this.value>0) loadLocations(this.value);"/>
+</apex:page>

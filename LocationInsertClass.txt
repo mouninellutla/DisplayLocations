@@ -1,0 +1,53 @@
+//This class is used to insert the location records
+
+public class LocationInsertClass {
+
+    
+    public Integer recordCount {get;set;}
+    
+    
+    // Insert given number of location records:
+    
+    public void insertLocationRecords(){
+        
+        if(recordCount != null && recordCount > 0) {
+            
+            try{
+                
+                List<Location__c> lstLocations = new List<Location__c>();
+                
+                for(Integer i=0; i<recordCount; i++) {
+                    //In Salesorce (So switched the values):
+                    //  Latitudes range from -90 to 90
+                    //  Longitudes range from -180 to 180
+                    lstLocations.add(new Location__c (Coordinates__Latitude__s = randomGeoLocation(30,50) , Coordinates__Longitude__s = randomGeoLocation(-70,-120)));
+                }
+                insert lstLocations;
+                ApexPages.addMessage(new ApexPages.message(Apexpages.Severity.INFO, recordCount+' Location(s) created. Check here: https://na35.salesforce.com/a07/o'));
+            }
+            
+            catch(Exception e) {
+                ApexPages.addMessage(new ApexPages.message(Apexpages.Severity.Error,e.getMessage()));
+            }
+            
+            //SELECT Coordinates__c,Coordinates__Latitude__s,Coordinates__Longitude__s,CreatedById,CreatedDate,Id,IsDeleted,LastActivityDate,LastModifiedById,LastModifiedDate,LastReferencedDate,LastViewedDate,Name,OwnerId,SystemModstamp FROM Location__c
+        }
+        
+        else{
+            ApexPages.addMessage(new ApexPages.message(Apexpages.Severity.Warning,recordCount+'is an invalid number'));
+        }
+    }
+    
+    public Decimal randomGeoLocation(Integer min, Integer max){
+        return min + ((max-min) * Math.random());
+    }
+}
+
+
+/* Notes:
+
+// Clarifications in Question:
+//  1. Black Flag - couldn't find.
+//  2. Longitude max - exceededing Salesforce limits.. So had to reverse the Lat/Lng Value
+
+*/
